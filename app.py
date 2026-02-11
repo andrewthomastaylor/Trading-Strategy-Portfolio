@@ -1,57 +1,40 @@
 import streamlit as st
-from dotenv import load_dotenv
-import os
-
-# Import UI components
-from src.ui.settings import render_settings
+from src.ui.dashboard import render_dashboard
 from src.ui.strategy_editor import render_strategy_editor
-from src.ui.backtest_ui import render_backtest_ui
-from src.ui.monitor_ui import render_monitor_ui
-from src.ui.optimizer_ui import render_optimizer_ui
-from src.ui.history_ui import render_history_ui
-from src.utils.logger import logger
+from src.ui.backtest_runner import render_backtest_runner
+from src.ui.portfolio_optimizer import render_portfolio_optimizer
+from src.ui.settings import render_settings
+from src.ui.ticker_explorer import render_ticker_explorer
 from src.utils.database import Database
+from src.utils.logger import logger
 
-# Load environment variables
-load_dotenv()
+st.set_page_config(page_title="Alpaca Algo Trader", layout="wide")
 
 def main():
-    st.set_page_config(page_title="Alpaca Algo Trading App", layout="wide")
-
-    st.title("🚀 Alpaca Algorithmic Trading Dashboard")
-
-    # Initialize Database
-    if 'db' not in st.session_state:
-        st.session_state['db'] = Database()
-
-    db = st.session_state['db']
-
-    # Initialize session state from DB if they don't exist
-    if 'alpaca_api_key' not in st.session_state:
-        st.session_state['alpaca_api_key'] = db.get_setting('alpaca_api_key', os.getenv("ALPACA_API_KEY", ""))
-    if 'alpaca_secret_key' not in st.session_state:
-        st.session_state['alpaca_secret_key'] = db.get_setting('alpaca_secret_key', os.getenv("ALPACA_SECRET_KEY", ""))
-    if 'symbols' not in st.session_state:
-        st.session_state['symbols'] = db.get_setting('symbols', ["AAPL", "MSFT", "BTC/USD"])
-
-    # Sidebar for navigation
     st.sidebar.title("Navigation")
-    app_mode = st.sidebar.radio("Choose a section",
-        ["Live Monitoring", "Trade History", "Strategy Editor", "Backtesting", "Portfolio Optimizer", "Settings"])
+    page = st.sidebar.radio("Go to", [
+        "Dashboard",
+        "Ticker Explorer",
+        "Strategy Editor",
+        "Backtest Runner",
+        "Portfolio Optimizer",
+        "Settings"
+    ])
 
-    # Render the selected section
-    if app_mode == "Settings":
-        render_settings()
-    elif app_mode == "Strategy Editor":
-        render_strategy_editor()
-    elif app_mode == "Backtesting":
-        render_backtest_ui()
-    elif app_mode == "Live Monitoring":
-        render_monitor_ui()
-    elif app_mode == "Portfolio Optimizer":
-        render_optimizer_ui()
-    elif app_mode == "Trade History":
-        render_history_ui()
+    db = Database()
+
+    if page == "Dashboard":
+        render_dashboard(db)
+    elif page == "Ticker Explorer":
+        render_ticker_explorer()
+    elif page == "Strategy Editor":
+        render_strategy_editor(db)
+    elif page == "Backtest Runner":
+        render_backtest_runner(db)
+    elif page == "Portfolio Optimizer":
+        render_portfolio_optimizer()
+    elif page == "Settings":
+        render_settings(db)
 
 if __name__ == "__main__":
     main()

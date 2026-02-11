@@ -19,7 +19,7 @@ class IndicatorStrategy(BaseStrategy):
 
     def get_indicators(self, data: pd.DataFrame):
         df = data.copy()
-        close = df['close'].values
+        close = df['close'].values.astype(float)
 
         # Calculate some common indicators
         df['rsi'] = talib.RSI(close, timeperiod=self.params.get('rsi_period', 14))
@@ -36,6 +36,9 @@ class IndicatorStrategy(BaseStrategy):
         df['bb_upper'] = upper
         df['bb_middle'] = middle
         df['bb_lower'] = lower
+
+        df['atr'] = talib.ATR(df['high'].values.astype(float), df['low'].values.astype(float), close, timeperiod=14)
+        df['adx'] = talib.ADX(df['high'].values.astype(float), df['low'].values.astype(float), close, timeperiod=14)
 
         return df
 
@@ -110,6 +113,12 @@ class IndicatorStrategy(BaseStrategy):
                     mask = (df[ind] < val) & (df[ind].shift(1) >= val)
             else:
                 mask = pd.Series(True, index=df.index)
+
+            # Log the condition trace for the last index
+            if mask.iloc[-1]:
+                self.logic_trace.append(f"{ind} {op} {val if val is not None else other} is TRUE")
+            else:
+                self.logic_trace.append(f"{ind} {op} {val if val is not None else other} is FALSE")
 
             final_mask &= mask
 

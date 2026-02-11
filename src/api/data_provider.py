@@ -10,7 +10,7 @@ class DataProvider:
     def __init__(self, alpaca_client: AlpacaClient = None):
         self.alpaca_client = alpaca_client
 
-    def fetch_data(self, symbol, timeframe, start, end=None, source="alpaca", asset_class=AssetClass.US_EQUITY):
+    def get_historical_data(self, symbol, timeframe, start=None, end=None, source="alpaca", asset_class=AssetClass.US_EQUITY, limit=None):
         """
         Fetch historical data from specified source.
         source: "alpaca" or "yfinance"
@@ -34,26 +34,98 @@ class DataProvider:
         logger.info(f"Fetching extended data for {symbol} ({years} years) from yfinance")
         return self._fetch_yfinance(symbol, timeframe, start, end)
 
-    def fetch_fundamentals(self, symbol):
+    def get_fundamentals(self, symbol):
         """
         Fetch fundamental data using Yahoo Finance.
         """
         try:
             yf_symbol = symbol.replace("/", "-")
             ticker = yf.Ticker(yf_symbol)
+            # Try to fetch some fast info to check validity
+            _ = ticker.fast_info
             info = ticker.info
             fundamentals = {
                 "pe_ratio": info.get("trailingPE"),
                 "forward_pe": info.get("forwardPE"),
+                "pb_ratio": info.get("priceToBook"),
                 "market_cap": info.get("marketCap"),
-                "dividend_yield": info.get("dividendYield"),
+                "dividend_yield": info.get("dividendYield") / 100 if info.get("dividendYield") is not None else None,
                 "revenue_growth": info.get("revenueGrowth"),
-                "profit_margins": info.get("profitMargins")
+                "profit_margins": info.get("profitMargins"),
+                "roe": info.get("returnOnEquity"),
+                "debt_to_equity": info.get("debtToEquity"),
+                "eps": info.get("trailingEps"),
+                "book_value": info.get("bookValue"),
+                "free_cashflow": info.get("freeCashflow")
             }
             return fundamentals
         except Exception as e:
             logger.error(f"Error fetching fundamentals for {symbol}: {e}")
             return {}
+
+    def get_extended_data(self, target_symbol, base_symbol, multiplier=1.0, expense_ratio=0.0, timeframe="1Day", start=None, end=None):
+        """
+        Extends target_symbol history using base_symbol and a multiplier.
+        Similar to Testfolio functionality.
+        """
+        logger.info(f"Generating extended data for {target_symbol} using {base_symbol} ({multiplier}x)")
+
+        # Get history for both
+        target_df = self.get_historical_data(target_symbol, timeframe, start=start, end=end)
+        base_df = self.get_historical_data(base_symbol, timeframe, start=start, end=end)
+
+        if base_df.empty:
+            return target_df
+
+        if target_df.empty:
+            # Full synthetic
+            synthetic = self._generate_synthetic(base_df, multiplier, expense_ratio)
+            return synthetic
+
+        # Partial extension: Find the gap
+        first_target_date = target_df.index[0]
+        base_pre_gap = base_df[base_df.index < first_target_date]
+
+        if base_pre_gap.empty:
+            return target_df
+
+        synthetic_pre_gap = self._generate_synthetic(base_pre_gap, multiplier, expense_ratio)
+
+        # Normalize synthetic prices to match target's first price
+        last_synth_price = synthetic_pre_gap['close'].iloc[-1]
+        first_target_price = target_df['close'].iloc[0]
+        ratio = first_target_price / last_synth_price
+
+        synthetic_pre_gap['close'] *= ratio
+        synthetic_pre_gap['open'] *= ratio
+        synthetic_pre_gap['high'] *= ratio
+        synthetic_pre_gap['low'] *= ratio
+
+        combined = pd.concat([synthetic_pre_gap, target_df])
+        return combined.sort_index()
+
+    def _generate_synthetic(self, base_df, multiplier, expense_ratio):
+        """
+        Generates synthetic returns based on base_df
+        """
+        df = base_df.copy()
+        returns = df['close'].pct_change().fillna(0)
+
+        # Apply leverage and expenses (daily)
+        daily_expense = (expense_ratio / 100) / 252
+        synth_returns = (returns * multiplier) - daily_expense
+
+        # Reconstruct prices
+        price_factor = (1 + synth_returns).cumprod()
+        initial_price = 100.0 # Arbitrary base price
+
+        df['close'] = initial_price * price_factor
+        df['open'] = df['close'].shift(1).fillna(initial_price)
+        df['high'] = df['close'] # Simplified
+        df['low'] = df['close']  # Simplified
+        df['volume'] = 0         # Synthetic data has no real volume
+
+        return df
 
     def _fetch_yfinance(self, symbol, timeframe, start, end):
         try:
