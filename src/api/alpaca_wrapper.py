@@ -116,3 +116,10 @@ class AlpacaClient:
         except Exception as e:
             logger.error(f"Error fetching asset info for {symbol}: {e}")
             return None
+
+    def get_clock(self):
+        try:
+            return self.trading_client.get_clock()
+        except Exception as e:
+            logger.error(f"Error fetching market clock: {e}")
+            return None

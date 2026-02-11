@@ -10,6 +10,7 @@ from src.ui.monitor_ui import render_monitor_ui
 from src.ui.optimizer_ui import render_optimizer_ui
 from src.ui.history_ui import render_history_ui
 from src.utils.logger import logger
+from src.utils.database import Database
 
 # Load environment variables
 load_dotenv()
@@ -19,13 +20,19 @@ def main():
 
     st.title("🚀 Alpaca Algorithmic Trading Dashboard")
 
-    # Initialize session state for various settings if they don't exist
+    # Initialize Database
+    if 'db' not in st.session_state:
+        st.session_state['db'] = Database()
+
+    db = st.session_state['db']
+
+    # Initialize session state from DB if they don't exist
     if 'alpaca_api_key' not in st.session_state:
-        st.session_state['alpaca_api_key'] = os.getenv("ALPACA_API_KEY", "")
+        st.session_state['alpaca_api_key'] = db.get_setting('alpaca_api_key', os.getenv("ALPACA_API_KEY", ""))
     if 'alpaca_secret_key' not in st.session_state:
-        st.session_state['alpaca_secret_key'] = os.getenv("ALPACA_SECRET_KEY", "")
+        st.session_state['alpaca_secret_key'] = db.get_setting('alpaca_secret_key', os.getenv("ALPACA_SECRET_KEY", ""))
     if 'symbols' not in st.session_state:
-        st.session_state['symbols'] = ["AAPL", "MSFT", "BTC/USD"]
+        st.session_state['symbols'] = db.get_setting('symbols', ["AAPL", "MSFT", "BTC/USD"])
 
     # Sidebar for navigation
     st.sidebar.title("Navigation")

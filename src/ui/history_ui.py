@@ -4,11 +4,14 @@ import pandas as pd
 def render_history_ui():
     st.header("Trade History & Logic Trace")
 
-    if 'monitor' not in st.session_state:
-        st.info("No active monitor history found. Start monitoring to see trade logs.")
+    db = st.session_state.get('db')
+    if db:
+        history = db.get_trades()
+    elif 'monitor' in st.session_state:
+        history = st.session_state['monitor'].trade_history
+    else:
+        st.info("No monitor history found.")
         return
-
-    history = st.session_state['monitor'].trade_history
 
     if not history:
         st.info("No trades executed yet.")
@@ -19,8 +22,14 @@ def render_history_ui():
 
         st.divider()
         st.subheader("Logic Trace Details")
-        for trade in reversed(history):
-            with st.expander(f"{trade['timestamp'].strftime('%Y-%m-%d %H:%M:%S')} - {trade['symbol']} {trade['side']}"):
+        for trade in history: # Already sorted by timestamp desc in DB query
+            ts = trade['timestamp']
+            if isinstance(ts, str):
+                ts_str = ts
+            else:
+                ts_str = ts.strftime('%Y-%m-%d %H:%M:%S')
+
+            with st.expander(f"{ts_str} - {trade['symbol']} {trade['side']}"):
                 st.write(f"**Status:** {trade['status']}")
                 st.write(f"**Reason (Trigger):** {trade['reason']}")
                 st.write("---")

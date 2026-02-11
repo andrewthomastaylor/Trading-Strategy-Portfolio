@@ -19,6 +19,13 @@ class BacktestEngine:
             entries = signals == 1
             exits = signals == -1
 
+            # Infer frequency from index
+            freq = None
+            if len(self.data) > 1:
+                freq = pd.infer_freq(self.data.index)
+            if not freq:
+                freq = 'D' # Fallback
+
             self.pf = vbt.Portfolio.from_signals(
                 self.data['close'],
                 entries,
@@ -26,7 +33,7 @@ class BacktestEngine:
                 init_cash=init_cash,
                 fees=fees,
                 slippage=slippage,
-                freq='D' # Default frequency, can be adjusted
+                freq=freq
             )
             return self.pf
         except Exception as e:

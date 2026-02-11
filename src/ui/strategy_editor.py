@@ -23,19 +23,25 @@ def render_strategy_editor():
     buy_conditions = []
     sell_conditions = []
     if logic_type == "custom":
-        st.subheader("Buy Conditions")
-        c1, c2, c3 = st.columns(3)
-        with c1: ind = st.selectbox("Indicator", ["rsi", "sma_fast", "sma_slow", "ema", "close"], key="buy_ind")
-        with c2: op = st.selectbox("Operator", ["<", ">", "==", "cross_above", "cross_below"], key="buy_op")
-        with c3: val = st.number_input("Value", value=30.0, key="buy_val")
-        buy_conditions.append({"indicator": ind, "operator": op, "value": val})
+        indicator_list = ["rsi", "sma_fast", "sma_slow", "ema", "close", "pe_ratio", "forward_pe", "dividend_yield"]
 
-        st.subheader("Sell Conditions")
-        c1, c2, c3 = st.columns(3)
-        with c1: ind_s = st.selectbox("Indicator", ["rsi", "sma_fast", "sma_slow", "ema", "close"], key="sell_ind")
-        with c2: op_s = st.selectbox("Operator", ["<", ">", "==", "cross_above", "cross_below"], key="sell_op")
-        with c3: val_s = st.number_input("Value", value=70.0, key="sell_val")
-        sell_conditions.append({"indicator": ind_s, "operator": op_s, "value": val_s})
+        st.subheader("Buy Conditions (ANDed)")
+        num_buy = st.number_input("Number of Buy Conditions", min_value=1, max_value=5, value=1)
+        for i in range(int(num_buy)):
+            c1, c2, c3 = st.columns(3)
+            with c1: ind = st.selectbox(f"Indicator {i+1}", indicator_list, key=f"buy_ind_{i}")
+            with c2: op = st.selectbox(f"Operator {i+1}", ["<", ">", "==", "cross_above", "cross_below"], key=f"buy_op_{i}")
+            with c3: val = st.number_input(f"Value {i+1}", value=30.0, key=f"buy_val_{i}")
+            buy_conditions.append({"indicator": ind, "operator": op, "value": val})
+
+        st.subheader("Sell Conditions (ANDed)")
+        num_sell = st.number_input("Number of Sell Conditions", min_value=1, max_value=5, value=1)
+        for i in range(int(num_sell)):
+            c1, c2, c3 = st.columns(3)
+            with c1: ind_s = st.selectbox(f"Indicator {i+1}", indicator_list, key=f"sell_ind_{i}")
+            with c2: op_s = st.selectbox(f"Operator {i+1}", ["<", ">", "==", "cross_above", "cross_below"], key=f"sell_op_{i}")
+            with c3: val_s = st.number_input(f"Value {i+1}", value=70.0, key=f"sell_val_{i}")
+            sell_conditions.append({"indicator": ind_s, "operator": op_s, "value": val_s})
 
     if st.button("Save Strategy"):
         params = {

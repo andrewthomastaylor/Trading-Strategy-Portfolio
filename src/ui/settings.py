@@ -14,20 +14,29 @@ def render_settings():
             st.session_state['alpaca_api_key'] = api_key
             st.session_state['alpaca_secret_key'] = secret_key
             st.session_state['paper_mode'] = paper_mode
-            st.success("Alpaca settings saved to session!")
+            st.session_state['db'].set_setting('alpaca_api_key', api_key)
+            st.session_state['db'].set_setting('alpaca_secret_key', secret_key)
+            st.session_state['db'].set_setting('paper_mode', paper_mode)
+            st.success("Alpaca settings saved to DB!")
 
     with st.expander("Email Notifications"):
-        email_sender = st.text_input("Sender Email", value=os.getenv("EMAIL_SENDER", ""))
-        email_password = st.text_input("App Password", value=os.getenv("EMAIL_APP_PASSWORD", ""), type="password")
+        email_sender = st.text_input("Sender Email", value=st.session_state.get('email_sender', os.getenv("EMAIL_SENDER", "")))
+        email_password = st.text_input("App Password", value=st.session_state.get('email_password', os.getenv("EMAIL_APP_PASSWORD", "")), type="password")
 
         if st.button("Save Email Credentials"):
             st.session_state['email_sender'] = email_sender
             st.session_state['email_password'] = email_password
-            st.success("Email settings saved to session!")
+            st.session_state['db'].set_setting('email_sender', email_sender)
+            st.session_state['db'].set_setting('email_password', email_password)
+            st.success("Email settings saved to DB!")
 
     with st.expander("General Settings"):
-        symbols = st.text_input("Trading Symbols (comma separated)", value="AAPL,MSFT,BTC/USD")
-        st.session_state['symbols'] = [s.strip() for s in symbols.split(",")]
+        default_symbols = ",".join(st.session_state.get('symbols', ["AAPL", "MSFT", "BTC/USD"]))
+        symbols = st.text_input("Trading Symbols (comma separated)", value=default_symbols)
+        symbol_list = [s.strip() for s in symbols.split(",")]
+        st.session_state['symbols'] = symbol_list
+        st.session_state['db'].set_setting('symbols', symbol_list)
 
-        interval = st.number_input("Monitoring Interval (minutes)", min_value=1, max_value=60, value=1)
+        interval = st.number_input("Monitoring Interval (minutes)", min_value=1, max_value=60, value=st.session_state.get('interval', 1))
         st.session_state['interval'] = interval
+        st.session_state['db'].set_setting('interval', interval)

@@ -39,8 +39,17 @@ class IndicatorStrategy(BaseStrategy):
 
         return df
 
-    def generate_signals(self, data: pd.DataFrame):
+    def generate_signals(self, data: pd.DataFrame, fundamentals: dict = None):
         df = self.get_indicators(data)
+
+        # Merge fundamentals into dataframe as constant columns for condition evaluation
+        if fundamentals:
+            for key, val in fundamentals.items():
+                if val is not None:
+                    df[key] = val
+                else:
+                    df[key] = np.nan
+
         signals = pd.Series(0, index=df.index)
         self.logic_trace = []
 

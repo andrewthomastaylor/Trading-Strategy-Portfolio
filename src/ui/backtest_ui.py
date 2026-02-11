@@ -53,7 +53,9 @@ def render_backtest_ui():
                 return
 
             strategy = st.session_state['current_strategy']
-            signals = strategy.generate_signals(data)
+
+            fundamentals = provider.fetch_fundamentals(symbol)
+            signals = strategy.generate_signals(data, fundamentals=fundamentals)
 
             engine = BacktestEngine(data)
             pf = engine.run_strategy(signals, fees=fees, slippage=slippage)
