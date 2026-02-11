@@ -1,0 +1,16 @@
+alpaca-py
+streamlit
+pandas
+numpy
+TA-Lib
+PyPortfolioOpt
+plotly
+python-dotenv
+vectorbt
+schedule
+scipy
+matplotlib
+pytest
+quantstats
+yfinance
+seaborn
