@@ -1,4 +1,4 @@
-const { createApp, ref, computed, onMounted, watch } = Vue;
+const { createApp, ref, computed, onMounted, watch, nextTick } = Vue;
 
 createApp({
     setup() {
@@ -39,7 +39,8 @@ createApp({
             plaidAccessToken: '',
             currency: 'USD',
             homeValue: 450000,
-            homeAddress: ''
+            homeAddress: '',
+            creditScore: 720
         });
 
         // Modals
@@ -94,6 +95,25 @@ createApp({
             return [...transactions.value].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
         });
 
+        const getCreditRating = computed(() => {
+            const score = settings.value.creditScore;
+            if (!score) return 'N/A';
+            if (score >= 800) return 'Exceptional';
+            if (score >= 740) return 'Very Good';
+            if (score >= 670) return 'Good';
+            if (score >= 580) return 'Fair';
+            return 'Poor';
+        });
+
+        const getCreditRatingColor = computed(() => {
+            const score = settings.value.creditScore;
+            if (!score) return 'text-gray-500';
+            if (score >= 740) return 'text-green-600';
+            if (score >= 670) return 'text-blue-600';
+            if (score >= 580) return 'text-yellow-600';
+            return 'text-red-600';
+        });
+
         // Watchers for persistence
         watch([accounts, cryptoWallets, budgetLimits, transactions, settings], () => {
             localStorage.setItem('accounts', JSON.stringify(accounts.value));
@@ -115,10 +135,10 @@ createApp({
             isRefreshing.value = true;
             await fetchCryptoPrices();
             lastUpdated.value = new Date().toLocaleTimeString();
-            setTimeout(() => {
-                isRefreshing.value = false;
+            isRefreshing.value = false;
+            nextTick(() => {
                 initCharts();
-            }, 500);
+            });
         };
 
         const fetchCryptoPrices = async () => {
@@ -286,7 +306,12 @@ createApp({
         };
 
         const initPlaidLink = () => {
-            alert('Plaid Link requires a backend to exchange tokens. In this personal dashboard, you can manually add accounts or use a local proxy.');
+            if (window.Plaid) {
+                console.log('Plaid SDK loaded');
+                alert('To use Plaid Link, you need a "link_token" from your server. \n\nIn this streamlined prototype, we use manual entry. In a production app, this button would open the Plaid secure login window.');
+            } else {
+                alert('Plaid SDK failed to load. Please check your internet connection.');
+            }
         };
 
         const lookupZillow = () => {
@@ -305,7 +330,9 @@ createApp({
         });
 
         watch(currentView, () => {
-            setTimeout(initCharts, 0);
+            nextTick(() => {
+                initCharts();
+            });
         });
 
         return {
@@ -314,6 +341,7 @@ createApp({
             showAddAccountModal, showAddCryptoModal, showAddBudgetModal, showAddTransactionModal,
             newAccount, newCrypto, newTx, cryptoPrices,
             totalCash, totalInvestments, totalCrypto, netWorth, monthlySpending, recentTransactions,
+            getCreditRating, getCreditRatingColor,
             formatCurrency, refreshData, addAccount, removeAccount, addCrypto, removeCrypto,
             getCategorySpending, getCategoryPercentage, exportData, clearAllData, initPlaidLink, addTransaction, lookupZillow
         };
