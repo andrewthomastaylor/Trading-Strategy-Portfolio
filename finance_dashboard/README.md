@@ -4,11 +4,25 @@ A streamlined, single-page application to track your net worth, spending, and cr
 
 ## 🚀 How to Use
 
-This is a **standalone frontend application**. No installation or server is required.
+### Basic Mode (Manual Entry)
+1.  **Open** `index.html` in any modern web browser.
+    - You can manually add accounts and transactions. Data is saved in your browser's `localStorage`.
 
-1.  **Download** the `finance_dashboard` folder.
-2.  **Open** `index.html` in any modern web browser (Chrome, Firefox, Safari, or Edge).
-    - You can simply double-click the file or drag and drop it into your browser window.
+### Pro Mode (Real Bank Connection via Plaid)
+To connect real bank accounts, you need to run a small local backend:
+
+1.  **Install dependencies**:
+    ```bash
+    pip install flask flask-cors plaid-python python-dotenv
+    ```
+2.  **Configure Plaid**:
+    - Copy `.env.example` to `.env`.
+    - Get your API keys from [Plaid Dashboard](https://dashboard.plaid.com) and add them to `.env`.
+3.  **Start the server**:
+    ```bash
+    python server.py
+    ```
+4.  **Connect**: Open `index.html`, go to **Accounts**, click **Add Account**, and then **Connect with Plaid**.
 
 ## ✨ Key Features
 

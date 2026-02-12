@@ -134,11 +134,38 @@ createApp({
         const refreshData = async () => {
             isRefreshing.value = true;
             await fetchCryptoPrices();
+            await fetchPlaidData();
             lastUpdated.value = new Date().toLocaleTimeString();
             isRefreshing.value = false;
             nextTick(() => {
                 initCharts();
             });
+        };
+
+        const fetchPlaidData = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/data');
+                const data = await response.json();
+
+                if (data.accounts && data.accounts.length > 0) {
+                    // Merge or replace accounts? For simplicity, we'll keep local ones and add unique ones from Plaid
+                    data.accounts.forEach(plaidAcc => {
+                        if (!accounts.value.some(a => a.name === plaidAcc.name)) {
+                            accounts.value.push(plaidAcc);
+                        }
+                    });
+                }
+
+                if (data.transactions && data.transactions.length > 0) {
+                    data.transactions.forEach(plaidTx => {
+                        if (!transactions.value.some(t => t.id === plaidTx.id)) {
+                            transactions.value.unshift(plaidTx);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.warn('Plaid server not reachable. Using local data only.');
+            }
         };
 
         const fetchCryptoPrices = async () => {
@@ -305,12 +332,43 @@ createApp({
             }
         };
 
-        const initPlaidLink = () => {
-            if (window.Plaid) {
-                console.log('Plaid SDK loaded');
-                alert('To use Plaid Link, you need a "link_token" from your server. \n\nIn this streamlined prototype, we use manual entry. In a production app, this button would open the Plaid secure login window.');
-            } else {
-                alert('Plaid SDK failed to load. Please check your internet connection.');
+        const initPlaidLink = async () => {
+            if (!window.Plaid) {
+                alert('Plaid SDK failed to load.');
+                return;
+            }
+
+            try {
+                // 1. Get Link Token from our server
+                const response = await fetch('http://localhost:5000/api/create_link_token', { method: 'POST' });
+                const { link_token } = await response.json();
+
+                if (!link_token) {
+                    alert('Could not initialize Plaid. Make sure server.py is running and you have added your API keys to .env');
+                    return;
+                }
+
+                // 2. Open Plaid Link
+                const handler = Plaid.create({
+                    token: link_token,
+                    onSuccess: async (public_token, metadata) => {
+                        // 3. Exchange public token for access token
+                        await fetch('http://localhost:5000/api/exchange_public_token', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ public_token })
+                        });
+                        alert('Account connected successfully! Refreshing data...');
+                        refreshData();
+                    },
+                    onExit: (err, metadata) => {
+                        if (err != null) console.error(err);
+                    },
+                });
+                handler.open();
+            } catch (error) {
+                console.error('Plaid initialization error:', error);
+                alert('Error connecting to local server. Make sure server.py is running.');
             }
         };
 
