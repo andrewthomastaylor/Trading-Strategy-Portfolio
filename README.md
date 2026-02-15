@@ -1,21 +1,14 @@
-# Algorithmic Trading System
+# Simplified Algorithmic Trading System
 
-A complete algorithmic trading system using Alpaca API with a 10-day moving average strategy.
+A modular and easy-to-understand algorithmic trading system using Alpaca.
 
-## Features
-- **Strategy**: 10-day Moving Average (SMA).
-- **Backtesting**: Comprehensive reports using QuantStats (2010 to present).
-- **Live Trading**: Support for paper and live trading via Alpaca.
-- **Notifications**: Email alerts for trades and system errors.
-- **Scheduling**: Automated daily execution.
-
-## File Structure
-- `strategy.py`: Strategy logic.
-- `backtester.py`: Backtesting script.
-- `live_trader.py`: Live trading script.
-- `email_notifier.py`: Email notification module.
-- `config_template.py`: Template for configuration.
-- `setup.py`: Automated setup script.
+## Architecture (Modular Chunks)
+- `strategy.py`: Pure logic for signal generation (10-day SMA).
+- `data_loader.py`: Handles data fetching from yfinance (backtest) and Alpaca (live).
+- `executor.py`: Handles order execution on Alpaca.
+- `notifier.py`: Simple email alert system.
+- `backtester.py`: Orchestrates historical testing and reporting.
+- `live_trader.py`: Orchestrates live trading and scheduling.
 
 ## Quick Start
 1. **Setup**:
@@ -23,25 +16,17 @@ A complete algorithmic trading system using Alpaca API with a 10-day moving aver
    python setup.py
    ```
 2. **Configure**:
-   Edit `config.py` and add your Alpaca API Key, Secret, and Gmail credentials.
+   Edit `config.py` with your Alpaca API Keys and Email settings.
 3. **Backtest**:
    ```bash
    python backtester.py
    ```
-   This generates a `report_SPY.html` file.
-4. **Live Trade (Paper)**:
+4. **Live Trade**:
    ```bash
    python live_trader.py --run-once
    ```
-5. **Schedule**:
-   ```bash
-   python live_trader.py --schedule
-   ```
 
-## Requirements
-- Python 3.x
-- Alpaca Trade API
-- Pandas, Numpy
-- QuantStats
-- yfinance
-- Schedule
+## Design Principles
+- **Separation of Concerns**: Each script does exactly one thing.
+- **Pure Functions**: Strategy logic is decoupled from data fetching and execution.
+- **Minimal Dependencies**: Uses standard libraries where possible.

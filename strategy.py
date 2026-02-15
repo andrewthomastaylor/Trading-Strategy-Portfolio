@@ -1,45 +1,30 @@
 import pandas as pd
 import numpy as np
 
-class MovingAverageStrategy:
-    def __init__(self, window=10):
-        self.window = window
+def calculate_sma(data, window=10):
+    """Calculates Simple Moving Average."""
+    return data['Close'].rolling(window=window).mean()
 
-    def calculate_signals(self, data):
-        """
-        Calculates signals based on 10-day moving average.
-        data: pd.DataFrame with 'Close' column
-        Returns: pd.DataFrame with 'SMA' and 'Signal' columns
-        """
-        df = data.copy()
-        df['SMA'] = df['Close'].rolling(window=self.window).mean()
+def generate_signals(data, window=10):
+    """Generates signals (1 for Long, 0 for None) based on SMA."""
+    df = data.copy()
+    df['SMA'] = calculate_sma(df, window)
 
-        # Signal: 1 if Close > SMA, 0 otherwise
-        df['Signal'] = 0.0
-        start_idx = self.window - 1
-        df.iloc[start_idx:, df.columns.get_loc('Signal')] = np.where(
-            df['Close'][start_idx:] > df['SMA'][start_idx:], 1.0, 0.0
-        )
+    df['Signal'] = 0.0
+    start_idx = window - 1
+    df.iloc[start_idx:, df.columns.get_loc('Signal')] = np.where(
+        df['Close'][start_idx:] > df['SMA'][start_idx:], 1.0, 0.0
+    )
+    return df
 
-        # Position: change in Signal
-        df['Position'] = df['Signal'].diff()
+def get_latest_action(df):
+    """Determines the action (BUY, SELL, HOLD) based on the last two signals."""
+    if len(df) < 2:
+        return 'HOLD'
 
-        return df
+    curr = df['Signal'].iloc[-1]
+    prev = df['Signal'].iloc[-2]
 
-    def get_latest_signal(self, data):
-        """
-        Returns the latest signal: 'BUY', 'SELL', or 'HOLD'
-        """
-        df = self.calculate_signals(data)
-        if len(df) < 2:
-            return 'HOLD'
-
-        current_signal = df['Signal'].iloc[-1]
-        previous_signal = df['Signal'].iloc[-2]
-
-        if current_signal == 1.0 and previous_signal == 0.0:
-            return 'BUY'
-        elif current_signal == 0.0 and previous_signal == 1.0:
-            return 'SELL'
-        else:
-            return 'HOLD'
+    if curr == 1.0 and prev == 0.0: return 'BUY'
+    if curr == 0.0 and prev == 1.0: return 'SELL'
+    return 'HOLD'

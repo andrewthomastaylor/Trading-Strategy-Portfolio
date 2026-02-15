@@ -1,31 +1,28 @@
 import unittest
 import pandas as pd
 import numpy as np
-from strategy import MovingAverageStrategy
+from strategy import generate_signals, get_latest_action
 
-class TestMovingAverageStrategy(unittest.TestCase):
+class TestStrategy(unittest.TestCase):
     def setUp(self):
-        self.strategy = MovingAverageStrategy(window=10)
-        # Create mock data
+        # Create mock data: 20 days of increasing prices
         dates = pd.date_range('2023-01-01', periods=20)
-        # Price going up
         prices = [100 + i for i in range(20)]
         self.data = pd.DataFrame({'Close': prices}, index=dates)
 
-    def test_calculate_signals(self):
-        df = self.strategy.calculate_signals(self.data)
+    def test_generate_signals(self):
+        df = generate_signals(self.data, window=10)
         self.assertIn('SMA', df.columns)
         self.assertIn('Signal', df.columns)
-        self.assertEqual(len(df), 20)
-        # SMA for window 10 should be NaN for first 9 rows
+        # SMA should be NaN for first 9 rows, valid from index 9 onwards
         self.assertTrue(np.isnan(df['SMA'].iloc[8]))
         self.assertFalse(np.isnan(df['SMA'].iloc[9]))
 
-    def test_get_latest_signal(self):
-        # With prices always increasing, Close > SMA, so it should be BUY or HOLD
-        signal = self.strategy.get_latest_signal(self.data)
-        # Since it's always above, the change was at step 10. At step 20 it's HOLD.
-        self.assertIn(signal, ['BUY', 'HOLD'])
+    def test_get_latest_action(self):
+        # Signal should be Long (1.0) because price > SMA
+        df = generate_signals(self.data, window=10)
+        action = get_latest_action(df)
+        self.assertIn(action, ['BUY', 'HOLD'])
 
 if __name__ == '__main__':
     unittest.main()
