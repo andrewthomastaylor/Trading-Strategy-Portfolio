@@ -1,0 +1,13 @@
+# Alpaca API Configuration
+ALPACA_API_KEY = "your_api_key_here"
+ALPACA_SECRET_KEY = "your_secret_key_here"
+ALPACA_BASE_URL = "https://paper-api.alpaca.markets" # Use "https://api.alpaca.markets" for live
+
+# Email Configuration
+EMAIL_SENDER = "your_email@gmail.com"
+EMAIL_PASSWORD = "your_app_password_here"
+EMAIL_RECEIVER = "your_email@gmail.com"
+
+# Trading Settings
+SYMBOL = "SPY"
+QUANTITY = 10
