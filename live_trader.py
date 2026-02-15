@@ -6,10 +6,7 @@ from data_loader import get_live_data
 from strategy import generate_signals, get_latest_action
 from executor import AlpacaExecutor
 from notifier import send_email_alert
-try:
-    import config
-except ImportError:
-    import config_template as config
+import config
 
 def trade_logic():
     print(f"--- Running Trade Logic at {time.ctime()} ---")

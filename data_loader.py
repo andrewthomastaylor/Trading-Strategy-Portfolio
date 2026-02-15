@@ -1,10 +1,7 @@
 import yfinance as yf
 import alpaca_trade_api as tradeapi
 import pandas as pd
-try:
-    import config
-except ImportError:
-    import config_template as config
+import config
 
 def get_historical_data(symbol, start="2010-01-01"):
     """Fetches data from yfinance for backtesting."""

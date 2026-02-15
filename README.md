@@ -16,7 +16,7 @@ A modular and easy-to-understand algorithmic trading system using Alpaca.
    python setup.py
    ```
 2. **Configure**:
-   Edit `config.py` with your Alpaca API Keys and Email settings.
+   Edit `.env` with your Alpaca API Keys and Email settings.
 3. **Backtest**:
    ```bash
    python backtester.py

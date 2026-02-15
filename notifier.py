@@ -1,10 +1,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-try:
-    import config
-except ImportError:
-    import config_template as config
+import config
 
 def send_email_alert(subject, body):
     """Sends an email alert if configured."""

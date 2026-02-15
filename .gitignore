@@ -1,6 +1,8 @@
-config.py
+.env
 __pycache__/
 *.pyc
 report_*.html
-.env
-.ipynb_checkpoints/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
