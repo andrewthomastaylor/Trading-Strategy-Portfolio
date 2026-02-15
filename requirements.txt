@@ -1,0 +1,8 @@
+alpaca-trade-api
+pandas
+numpy
+quantstats
+schedule
+yfinance
+python-dotenv
+matplotlib
